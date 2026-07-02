@@ -9,6 +9,7 @@ import "./tasks/accounts";
 
 const mnemonic: string = vars.get("MNEMONIC", "test test test test test test test test test test test junk");
 const infuraApiKey: string = vars.get("INFURA_API_KEY", "");
+const isCoverageRun = process.argv.includes("coverage");
 
 const chainIds = {
   "arbitrum-mainnet": 42161,
@@ -98,6 +99,8 @@ const config: HardhatUserConfig = {
   solidity: {
     version: "0.8.19",
     settings: {
+      // Coverage counters are not observable in via-IR bytecode.
+      viaIR: !isCoverageRun,
       metadata: {
         // Keep deployment bytecode deterministic across builds.
         bytecodeHash: "none",

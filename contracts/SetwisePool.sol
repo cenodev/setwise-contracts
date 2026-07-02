@@ -5,7 +5,6 @@ pragma solidity ^0.8.19;
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {SafeCast} from "@openzeppelin/contracts/utils/math/SafeCast.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IWrappedNativeToken} from "./interfaces/IWrappedNativeToken.sol";
@@ -13,7 +12,6 @@ import {IWrappedNativeToken} from "./interfaces/IWrappedNativeToken.sol";
 import {SetwisePoolBase} from "./SetwisePoolBase.sol";
 
 contract SetwisePool is SetwisePoolBase, Ownable {
-    using SafeCast for uint256;
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -59,107 +57,57 @@ contract SetwisePool is SetwisePoolBase, Ownable {
         setBalance(token, assetBalance(token));
     }
 
-    function confirmUnique(address token) internal view returns (uint32 newHash, uint256 currentBalance) {
-        uint256 _current = _packedBalances[token];
-        currentBalance = uint256(uint224(_current));
-        uint32 lastHash = uint32(_current >> 224);
-        newHash = uint32(block.number + uint256(uint160(tx.origin)));
-        require(newHash != lastHash, "Setwise: Failed tx uniqueness");
-    }
-
-    function makeWriteValue(uint32 newHash, uint256 newBalance) internal pure returns (uint256) {
-        return (uint256(newHash) << 224) + uint256(newBalance.toUint224());
-    }
-
     function setBalance(address token, uint256 newBalance) internal virtual {
-        (uint32 newHash, ) = confirmUnique(token);
-        _packedBalances[token] = makeWriteValue(newHash, newBalance);
+        _recordedBalances[token] = newBalance;
     }
 
     function increaseBalance(address token, uint256 increaseAmount) internal virtual {
-        (uint32 newHash, uint256 curBalance) = confirmUnique(token);
-        _packedBalances[token] = makeWriteValue(newHash, curBalance + increaseAmount);
+        _recordedBalances[token] += increaseAmount;
     }
 
     function decreaseBalance(address token, uint256 decreaseAmount) internal virtual {
-        (uint32 newHash, uint256 curBalance) = confirmUnique(token);
-        _packedBalances[token] = makeWriteValue(newHash, curBalance - decreaseAmount);
+        _recordedBalances[token] -= decreaseAmount;
     }
 
-    function recordedBalance(address token) public view virtual override returns (uint256) {
-        return uint256(uint224(_packedBalances[token]));
-    }
-
-    // Can deposit raw ETH by attaching as msg.value
-    function settlePortfolioDeposit(
-        address investor,
+    function depositPortfolio(
         uint256[] calldata depositAmounts,
         uint256 lockDays,
         uint256 shares,
+        bytes32 quoteId,
         uint256 deadline,
-        Signature calldata signature
-    ) public payable override tradingActive beforeDeadline(deadline) {
-        if (msg.value > 0) {
-            safeEthSend(WRAPPED_NATIVE_TOKEN, msg.value);
-        }
-        // Make sure the depositor is allowed
-        require(msg.sender == investor, "Listed investor does not match msg.sender");
-        bytes32 depositDigest = createDepositDigest(investor, depositAmounts, lockDays, shares, deadline);
-        // Revert if it's signed by the wrong address
-        verifyDigestSignature(depositDigest, signature);
+        bytes calldata signature
+    ) external override nonReentrant tradingActive beforeDeadline(deadline) {
+        bytes32 depositDigest = createDepositDigest(msg.sender, depositAmounts, lockDays, shares, quoteId, deadline);
+        verifyAndConsumeQuote(quoteId, depositDigest, signature);
 
-        // Check deposit amounts, syncing as we go
-        uint256 i = 0;
         uint256 n = depositAmounts.length;
-        while (i < n) {
-            uint256 allegedDeposit = depositAmounts[i];
-            if (allegedDeposit > 0) {
-                address _token = assetAt(i);
-                uint256 currentBalance = assetBalance(_token);
-                require(currentBalance - recordedBalance(_token) >= allegedDeposit, "Insufficient token deposit");
-                setBalance(_token, currentBalance);
+        for (uint256 i = 0; i < n; i++) {
+            uint256 transferAmount = depositAmounts[i];
+            if (transferAmount > 0) {
+                IERC20(assetAt(i)).safeTransferFrom(msg.sender, address(this), transferAmount);
             }
-            i++;
         }
-        // OK now we're good
-        _mintOrVesting(investor, lockDays, shares);
-        emit PortfolioDeposited(investor, shares, lockDays);
+
+        _completePortfolioDeposit(msg.sender, depositAmounts, lockDays, shares);
     }
 
-    function settleSingleAssetDeposit(
+    function _completePortfolioDeposit(
         address investor,
-        address inputAsset,
-        uint256 inputAmount,
+        uint256[] calldata depositAmounts,
         uint256 lockDays,
-        uint256 shares,
-        uint256 deadline,
-        Signature calldata signature
-    ) public payable override tradingActive beforeDeadline(deadline) {
-        if (msg.value > 0) {
-            safeEthSend(WRAPPED_NATIVE_TOKEN, msg.value);
+        uint256 shares
+    ) internal {
+        uint256 n = depositAmounts.length;
+        for (uint256 i = 0; i < n; i++) {
+            uint256 depositAmount = depositAmounts[i];
+            if (depositAmount > 0) {
+                address asset = assetAt(i);
+                uint256 currentBalance = assetBalance(asset);
+                require(currentBalance - recordedBalance(asset) >= depositAmount, "Insufficient token deposit");
+                setBalance(asset, currentBalance);
+            }
         }
-        // Make sure the depositor is allowed
-        require(msg.sender == investor && isSupportedAsset(inputAsset), "Invalid input");
 
-        // Check the signature
-        bytes32 depositDigest = createSingleDepositDigest(
-            investor,
-            inputAsset,
-            inputAmount,
-            lockDays,
-            shares,
-            deadline
-        );
-        // Revert if it's signed by the wrong address
-        verifyDigestSignature(depositDigest, signature);
-
-        // Check deposit amount and sync balance
-        uint256 currentBalance = assetBalance(inputAsset);
-        require(currentBalance - recordedBalance(inputAsset) >= inputAmount, "Insufficient token deposit");
-        // sync the balance
-        setBalance(inputAsset, currentBalance);
-
-        // OK now we're good
         _mintOrVesting(investor, lockDays, shares);
         emit PortfolioDeposited(investor, shares, lockDays);
     }
@@ -173,9 +121,10 @@ contract SetwisePool is SetwisePoolBase, Ownable {
         uint256 sharesToBurn,
         address assetAddress,
         uint256 assetAmount,
+        bytes32 quoteId,
         uint256 deadline,
-        Signature calldata signature
-    ) external override tradingActive beforeDeadline(deadline) {
+        bytes calldata signature
+    ) external override nonReentrant tradingActive beforeDeadline(deadline) {
         /* CHECKS */
         require(msg.sender == investor, "investor does not match msg.sender");
 
@@ -185,9 +134,15 @@ contract SetwisePool is SetwisePoolBase, Ownable {
             sendEthBack = true;
         }
 
-        bytes32 withdrawalDigest = createWithdrawalDigest(investor, sharesToBurn, assetAddress, assetAmount, deadline);
-        // Reverts if it's signed by the wrong address
-        verifyDigestSignature(withdrawalDigest, signature);
+        bytes32 withdrawalDigest = createWithdrawalDigest(
+            investor,
+            sharesToBurn,
+            assetAddress,
+            assetAmount,
+            quoteId,
+            deadline
+        );
+        verifyAndConsumeQuote(quoteId, withdrawalDigest, signature);
 
         /* EFFECTS */
         // Reverts if pool token balance is insufficient
@@ -209,32 +164,37 @@ contract SetwisePool is SetwisePoolBase, Ownable {
 
     /* SWAP Functionality */
 
-    // Don't need a separate "transmit" function here since it's already payable
     // Gas optimized - no balance checks
     // Don't need fairOutput checks since exactly inputAmount is wrapped
     function swapExactNativeForAsset(
         address outputAsset,
         uint256 inputAmount,
         uint256 outputAmount,
+        bytes32 quoteId,
         uint256 deadline,
         address recipient,
-        Signature calldata signature,
+        bytes calldata signature,
         bytes calldata auxiliaryData
-    ) external payable virtual override tradingActive beforeDeadline(deadline) {
+    ) external payable virtual override nonReentrant tradingActive beforeDeadline(deadline) {
         /* CHECKS */
         require(isSupportedAsset(outputAsset), "Setwise: Invalid token");
-        // Wrap ETH (as balance or value) as input. This will revert if insufficient balance is provided
+        if (msg.value != inputAmount) {
+            revert InvalidNativeAmount(inputAmount, msg.value);
+        }
+        {
+            bytes32 digest = createSwapQuoteDigest(
+                msg.sender,
+                WRAPPED_NATIVE_TOKEN,
+                outputAsset,
+                inputAmount,
+                outputAmount,
+                quoteId,
+                deadline,
+                recipient
+            );
+            verifyAndConsumeQuote(quoteId, digest, signature);
+        }
         safeEthSend(WRAPPED_NATIVE_TOKEN, inputAmount);
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(
-            WRAPPED_NATIVE_TOKEN,
-            outputAsset,
-            inputAmount,
-            outputAmount,
-            deadline,
-            recipient
-        );
-        verifyDigestSignature(digest, signature);
 
         /* EFFECTS */
         increaseBalance(WRAPPED_NATIVE_TOKEN, inputAmount);
@@ -246,71 +206,30 @@ contract SetwisePool is SetwisePoolBase, Ownable {
         emit SwapExecuted(WRAPPED_NATIVE_TOKEN, outputAsset, recipient, inputAmount, outputAmount, auxiliaryData);
     }
 
-    // Mostly copied from gas-optimized settleAssetForAssetSwap functionality
-    function settleAssetForNativeSwap(
-        address inputAsset,
-        uint256 inputAmount,
-        uint256 outputAmount,
-        uint256 deadline,
-        address recipient,
-        Signature calldata signature,
-        bytes calldata auxiliaryData
-    ) external virtual override tradingActive beforeDeadline(deadline) {
-        /* CHECKS */
-        require(isSupportedAsset(inputAsset), "Setwise: Invalid token");
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(
-            inputAsset,
-            WRAPPED_NATIVE_TOKEN,
-            inputAmount,
-            outputAmount,
-            deadline,
-            recipient
-        );
-        verifyDigestSignature(digest, signature);
-
-        // Check that enough input token has been transmitted
-        uint256 currentInputBalance = assetBalance(inputAsset);
-        uint256 actualInput = currentInputBalance - recordedBalance(inputAsset);
-        uint256 fairOutput = calculateFairOutput(inputAmount, actualInput, outputAmount);
-
-        /* EFFECTS */
-        setBalance(inputAsset, currentInputBalance);
-        decreaseBalance(WRAPPED_NATIVE_TOKEN, fairOutput);
-
-        /* INTERACTIONS */
-        // Unwrap and forward ETH, without sync
-        IWrappedNativeToken(WRAPPED_NATIVE_TOKEN).withdraw(fairOutput);
-        safeEthSend(recipient, fairOutput);
-
-        emit SwapExecuted(inputAsset, WRAPPED_NATIVE_TOKEN, recipient, actualInput, fairOutput, auxiliaryData);
-    }
-
     function depositSingleAsset(
         address inputAsset,
         uint256 inputAmount,
         uint256 lockDays,
         uint256 shares,
+        bytes32 quoteId,
         uint256 deadline,
-        Signature calldata signature
-    ) external virtual override tradingActive beforeDeadline(deadline) {
+        bytes calldata signature
+    ) external virtual override nonReentrant tradingActive beforeDeadline(deadline) {
         // Make sure the depositor is allowed
         require(isSupportedAsset(inputAsset), "Invalid input");
 
-        // Will revert if msg.sender has insufficient balance
-        IERC20(inputAsset).safeTransferFrom(msg.sender, address(this), inputAmount);
-
-        // Check the signature
         bytes32 depositDigest = createSingleDepositDigest(
             msg.sender,
             inputAsset,
             inputAmount,
             lockDays,
             shares,
+            quoteId,
             deadline
         );
-        // Revert if it's signed by the wrong address
-        verifyDigestSignature(depositDigest, signature);
+        verifyAndConsumeQuote(quoteId, depositDigest, signature);
+
+        IERC20(inputAsset).safeTransferFrom(msg.sender, address(this), inputAmount);
 
         // sync the deposited asset
         increaseBalance(inputAsset, inputAmount);
@@ -326,25 +245,28 @@ contract SetwisePool is SetwisePoolBase, Ownable {
         address inputAsset,
         uint256 inputAmount,
         uint256 outputAmount,
+        bytes32 quoteId,
         uint256 deadline,
         address recipient,
-        Signature calldata signature,
+        bytes calldata signature,
         bytes calldata auxiliaryData
-    ) external virtual override tradingActive beforeDeadline(deadline) {
+    ) external virtual override nonReentrant tradingActive beforeDeadline(deadline) {
         /* CHECKS */
         require(isSupportedAsset(inputAsset), "Setwise: Invalid token");
-        // Will revert if msg.sender has insufficient balance
+        {
+            bytes32 digest = createSwapQuoteDigest(
+                msg.sender,
+                inputAsset,
+                WRAPPED_NATIVE_TOKEN,
+                inputAmount,
+                outputAmount,
+                quoteId,
+                deadline,
+                recipient
+            );
+            verifyAndConsumeQuote(quoteId, digest, signature);
+        }
         IERC20(inputAsset).safeTransferFrom(msg.sender, address(this), inputAmount);
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(
-            inputAsset,
-            WRAPPED_NATIVE_TOKEN,
-            inputAmount,
-            outputAmount,
-            deadline,
-            recipient
-        );
-        verifyDigestSignature(digest, signature);
 
         /* EFFECTS */
         increaseBalance(inputAsset, inputAmount);
@@ -366,18 +288,28 @@ contract SetwisePool is SetwisePoolBase, Ownable {
         address outputAsset,
         uint256 inputAmount,
         uint256 outputAmount,
+        bytes32 quoteId,
         uint256 deadline,
         address recipient,
-        Signature calldata signature,
+        bytes calldata signature,
         bytes calldata auxiliaryData
-    ) external virtual override tradingActive beforeDeadline(deadline) {
+    ) external virtual override nonReentrant tradingActive beforeDeadline(deadline) {
         /* CHECKS */
         require(isSupportedAsset(inputAsset) && isSupportedAsset(outputAsset), "Setwise: Invalid tokens");
-        // Will revert if msg.sender has insufficient balance
+        {
+            bytes32 digest = createSwapQuoteDigest(
+                msg.sender,
+                inputAsset,
+                outputAsset,
+                inputAmount,
+                outputAmount,
+                quoteId,
+                deadline,
+                recipient
+            );
+            verifyAndConsumeQuote(quoteId, digest, signature);
+        }
         IERC20(inputAsset).safeTransferFrom(msg.sender, address(this), inputAmount);
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(inputAsset, outputAsset, inputAmount, outputAmount, deadline, recipient);
-        verifyDigestSignature(digest, signature);
 
         /* EFFECTS */
         increaseBalance(inputAsset, inputAmount);
@@ -387,49 +319,5 @@ contract SetwisePool is SetwisePoolBase, Ownable {
         IERC20(outputAsset).safeTransfer(recipient, outputAmount);
 
         emit SwapExecuted(inputAsset, outputAsset, recipient, inputAmount, outputAmount, auxiliaryData);
-    }
-
-    // Gas optimized - single token balance check for input
-    // output is dead-reckoned and scaled back if necessary
-    function settleAssetForAssetSwap(
-        address inputAsset,
-        address outputAsset,
-        uint256 inputAmount,
-        uint256 outputAmount,
-        uint256 deadline,
-        address recipient,
-        Signature calldata signature,
-        bytes calldata auxiliaryData
-    ) public virtual override tradingActive beforeDeadline(deadline) {
-        /* CHECKS */
-        require(isSupportedAsset(inputAsset) && isSupportedAsset(outputAsset), "Setwise: Invalid tokens");
-
-        {
-            // Avoid stack too deep
-            // Revert if it's signed by the wrong address
-            bytes32 digest = createSwapQuoteDigest(
-                inputAsset,
-                outputAsset,
-                inputAmount,
-                outputAmount,
-                deadline,
-                recipient
-            );
-            verifyDigestSignature(digest, signature);
-        }
-
-        // Get fair output value
-        uint256 currentInputBalance = assetBalance(inputAsset);
-        uint256 actualInput = currentInputBalance - recordedBalance(inputAsset);
-        uint256 fairOutput = calculateFairOutput(inputAmount, actualInput, outputAmount);
-
-        /* EFFECTS */
-        setBalance(inputAsset, currentInputBalance);
-        decreaseBalance(outputAsset, fairOutput);
-
-        /* INTERACTIONS */
-        IERC20(outputAsset).safeTransfer(recipient, fairOutput);
-
-        emit SwapExecuted(inputAsset, outputAsset, recipient, actualInput, fairOutput, auxiliaryData);
     }
 }

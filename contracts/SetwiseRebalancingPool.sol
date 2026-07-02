@@ -140,31 +140,36 @@ contract SetwiseRebalancingPool is SetwisePool, ERC20Permit {
         minimumY = ((ONE_IN_SIX_DECIMALS - rawMultY) * offchainY) / ONE_IN_SIX_DECIMALS;
     }
 
-    // Don't need a separate "transmit" function here since it's already payable
     // Gas optimized - no balance checks
     // Don't need fairOutput checks since exactly inputAmount is wrapped
     function swapExactNativeForAsset(
         address outputAsset,
         uint256 inputAmount,
         uint256 outputAmount,
+        bytes32 quoteId,
         uint256 deadline,
         address recipient,
-        Signature calldata signature,
+        bytes calldata signature,
         bytes calldata auxiliaryData
-    ) external payable override tradingActive {
+    ) external payable override nonReentrant tradingActive {
         /* CHECKS */
-        // Wrap ETH (as balance or value) as input. This will revert if insufficient balance is provided
+        if (msg.value != inputAmount) {
+            revert InvalidNativeAmount(inputAmount, msg.value);
+        }
+        {
+            bytes32 digest = createSwapQuoteDigest(
+                msg.sender,
+                WRAPPED_NATIVE_TOKEN,
+                outputAsset,
+                inputAmount,
+                outputAmount,
+                quoteId,
+                deadline,
+                recipient
+            );
+            verifyAndConsumeQuote(quoteId, digest, signature);
+        }
         safeEthSend(WRAPPED_NATIVE_TOKEN, inputAmount);
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(
-            WRAPPED_NATIVE_TOKEN,
-            outputAsset,
-            inputAmount,
-            outputAmount,
-            deadline,
-            recipient
-        );
-        verifyDigestSignature(digest, signature);
 
         (uint256 qX, uint256 qY) = unpackAndCheckInvariant(WRAPPED_NATIVE_TOKEN, outputAsset, deadline);
 
@@ -178,70 +183,33 @@ contract SetwiseRebalancingPool is SetwisePool, ERC20Permit {
         emit SwapExecuted(WRAPPED_NATIVE_TOKEN, outputAsset, recipient, inputAmount, outputAmount, auxiliaryData);
     }
 
-    // Mostly copied from gas-optimized settleAssetForAssetSwap functionality
-    function settleAssetForNativeSwap(
-        address inputAsset,
-        uint256 inputAmount,
-        uint256 outputAmount,
-        uint256 deadline,
-        address recipient,
-        Signature calldata signature,
-        bytes calldata auxiliaryData
-    ) external override tradingActive {
-        /* CHECKS */
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(
-            inputAsset,
-            WRAPPED_NATIVE_TOKEN,
-            inputAmount,
-            outputAmount,
-            deadline,
-            recipient
-        );
-        verifyDigestSignature(digest, signature);
-
-        (uint256 qX, uint256 qY) = unpackAndCheckInvariant(inputAsset, WRAPPED_NATIVE_TOKEN, deadline);
-        // Check that enough input token has been transmitted
-        uint256 currentInputBalance = assetBalance(inputAsset);
-        uint256 actualInput = currentInputBalance - qX;
-        uint256 fairOutput = calculateFairOutput(inputAmount, actualInput, outputAmount);
-
-        /* EFFECTS */
-        setBalance(inputAsset, currentInputBalance);
-        setBalance(WRAPPED_NATIVE_TOKEN, qY - fairOutput);
-
-        /* INTERACTIONS */
-        // Unwrap and forward ETH, without sync
-        IWrappedNativeToken(WRAPPED_NATIVE_TOKEN).withdraw(fairOutput);
-        safeEthSend(recipient, fairOutput);
-
-        emit SwapExecuted(inputAsset, WRAPPED_NATIVE_TOKEN, recipient, actualInput, fairOutput, auxiliaryData);
-    }
-
     // Gas optimized, no balance checks
     // No need to check fairOutput since the inputAsset pull works
     function swapExactAssetForNative(
         address inputAsset,
         uint256 inputAmount,
         uint256 outputAmount,
+        bytes32 quoteId,
         uint256 deadline,
         address recipient,
-        Signature calldata signature,
+        bytes calldata signature,
         bytes calldata auxiliaryData
-    ) external override tradingActive {
+    ) external override nonReentrant tradingActive {
         /* CHECKS */
-        // Will revert if msg.sender has insufficient balance
+        {
+            bytes32 digest = createSwapQuoteDigest(
+                msg.sender,
+                inputAsset,
+                WRAPPED_NATIVE_TOKEN,
+                inputAmount,
+                outputAmount,
+                quoteId,
+                deadline,
+                recipient
+            );
+            verifyAndConsumeQuote(quoteId, digest, signature);
+        }
         IERC20(inputAsset).safeTransferFrom(msg.sender, address(this), inputAmount);
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(
-            inputAsset,
-            WRAPPED_NATIVE_TOKEN,
-            inputAmount,
-            outputAmount,
-            deadline,
-            recipient
-        );
-        verifyDigestSignature(digest, signature);
 
         (uint256 qX, uint256 qY) = unpackAndCheckInvariant(inputAsset, WRAPPED_NATIVE_TOKEN, deadline);
 
@@ -265,17 +233,27 @@ contract SetwiseRebalancingPool is SetwisePool, ERC20Permit {
         address outputAsset,
         uint256 inputAmount,
         uint256 outputAmount,
+        bytes32 quoteId,
         uint256 deadline,
         address recipient,
-        Signature calldata signature,
+        bytes calldata signature,
         bytes calldata auxiliaryData
-    ) external override tradingActive {
+    ) external override nonReentrant tradingActive {
         /* CHECKS */
-        // Will revert if msg.sender has insufficient balance
+        {
+            bytes32 digest = createSwapQuoteDigest(
+                msg.sender,
+                inputAsset,
+                outputAsset,
+                inputAmount,
+                outputAmount,
+                quoteId,
+                deadline,
+                recipient
+            );
+            verifyAndConsumeQuote(quoteId, digest, signature);
+        }
         IERC20(inputAsset).safeTransferFrom(msg.sender, address(this), inputAmount);
-        // Revert if it's signed by the wrong address
-        bytes32 digest = createSwapQuoteDigest(inputAsset, outputAsset, inputAmount, outputAmount, deadline, recipient);
-        verifyDigestSignature(digest, signature);
 
         (uint256 qX, uint256 qY) = unpackAndCheckInvariant(inputAsset, outputAsset, deadline);
 
@@ -287,47 +265,5 @@ contract SetwiseRebalancingPool is SetwisePool, ERC20Permit {
         IERC20(outputAsset).safeTransfer(recipient, outputAmount);
 
         emit SwapExecuted(inputAsset, outputAsset, recipient, inputAmount, outputAmount, auxiliaryData);
-    }
-
-    // Gas optimized - single token balance check for input
-    // output is dead-reckoned and scaled back if necessary
-    function settleAssetForAssetSwap(
-        address inputAsset,
-        address outputAsset,
-        uint256 inputAmount,
-        uint256 outputAmount,
-        uint256 deadline,
-        address recipient,
-        Signature calldata signature,
-        bytes calldata auxiliaryData
-    ) public override tradingActive {
-        /* CHECKS */
-        {
-            // Avoid stack too deep
-            // Revert if it's signed by the wrong address
-            bytes32 digest = createSwapQuoteDigest(
-                inputAsset,
-                outputAsset,
-                inputAmount,
-                outputAmount,
-                deadline,
-                recipient
-            );
-            verifyDigestSignature(digest, signature);
-        }
-        (uint256 qX, uint256 qY) = unpackAndCheckInvariant(inputAsset, outputAsset, deadline);
-        // Get fair output value
-        uint256 currentInputBalance = assetBalance(inputAsset);
-        uint256 actualInput = currentInputBalance - qX;
-        uint256 fairOutput = calculateFairOutput(inputAmount, actualInput, outputAmount);
-
-        /* EFFECTS */
-        setBalance(inputAsset, currentInputBalance);
-        setBalance(outputAsset, qY - fairOutput);
-
-        /* INTERACTIONS */
-        IERC20(outputAsset).safeTransfer(recipient, fairOutput);
-
-        emit SwapExecuted(inputAsset, outputAsset, recipient, actualInput, fairOutput, auxiliaryData);
     }
 }

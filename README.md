@@ -24,21 +24,33 @@ Calls that pull approved ERC-20 assets from the caller:
 - `swapExactAssetForAsset`
 - `swapExactAssetForNative`
 
-Calls that settle assets transferred to the pool before the transaction:
-
-- `settlePortfolioDeposit`
-- `settleSingleAssetDeposit`
-- `settleAssetForAssetSwap`
-- `settleAssetForNativeSwap`
-
 Other portfolio operations include `withdrawPortfolio`, `withdrawSingleAsset`, `claimShares`, `portfolioState`,
 `assetCount`, `assetAt`, and `isSupportedAsset`.
 
+Asset-moving calls are atomic: ERC-20 inputs are pulled from the caller with `transferFrom`, and native swaps require
+`msg.value` to equal the signed input amount. The contracts do not support settling assets transferred to a pool in an
+earlier transaction.
+
 ## Signed messages
 
-The EIP-712 domain name is `SetwisePool`, version `1.0.0`. The quote signer must produce the Setwise message types
+The EIP-712 domain name is `SetwisePool`, version `2.0.0`. The quote signer must produce the Setwise message types
 `SwapQuote`, `PortfolioDeposit`, `SingleAssetDeposit`, and `SingleAssetWithdrawal` defined in `SetwisePoolBase.sol`.
-These schemas intentionally differ from the original Clipper schemas.
+
+Every signed action includes a globally unique, nonzero `bytes32 quoteId`. A successful action marks
+`usedQuoteIds(quoteId)`, so it cannot be replayed. Quote IDs are unordered: independent quotes can execute concurrently
+or out of issuance order, including quotes submitted through the same router. Swap quotes also include an explicit
+`payer`, preventing a different wallet from submitting another user's quote. Signatures use dynamic `bytes` and support
+both EOA signers and ERC-1271 contract signers such as multisigs.
+
+## Smart wallets and account abstraction
+
+Setwise uses `msg.sender` as the investing or paying wallet and does not rely on `tx.origin`. Multiple smart-account
+operations can therefore touch the same pool asset in one ERC-4337-style EntryPoint bundle. Asset-moving entry points
+are protected against reentrancy.
+
+Smart wallets should approve portfolio assets by executing the token's normal `approve` function, which can be batched
+with a Setwise call. ERC-2612 permit remains available for EOA-held portfolio shares but is not required by any Setwise
+operation. Wallets that cannot receive native currency should request wrapped-native output instead.
 
 ## Development
 
