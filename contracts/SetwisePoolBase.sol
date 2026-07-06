@@ -15,14 +15,15 @@
 
 pragma solidity ^0.8.19;
 
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
-abstract contract SetwisePoolBase is ERC20, ReentrancyGuard {
+abstract contract SetwisePoolBase is Initializable, ERC20Upgradeable, ReentrancyGuardUpgradeable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -34,10 +35,13 @@ abstract contract SetwisePoolBase is ERC20, ReentrancyGuard {
     uint256 internal constant ONE_IN_TEN_DECIMALS = 1e10;
 
     // Signer is passed in on construction, hence "immutable"
-    address public immutable QUOTE_SIGNER;
-    address public immutable WRAPPED_NATIVE_TOKEN;
+    // solhint-disable-next-line var-name-mixedcase
+    address public QUOTE_SIGNER;
+    // solhint-disable-next-line var-name-mixedcase
+    address public WRAPPED_NATIVE_TOKEN;
     // Constant values for EIP-712 signing
-    bytes32 internal immutable QUOTE_DOMAIN_SEPARATOR;
+    // solhint-disable-next-line var-name-mixedcase
+    bytes32 internal QUOTE_DOMAIN_SEPARATOR;
     string internal constant VERSION = "2.0.0";
     string internal constant NAME = "SetwisePool";
 
@@ -117,12 +121,15 @@ abstract contract SetwisePoolBase is ERC20, ReentrancyGuard {
         return "SETWISE";
     }
 
-    // Take in the designated signer address and the token list
-    constructor(
+    // solhint-disable-next-line func-name-mixedcase
+    function __SetwisePoolBase_init(
         address quoteSigner,
         address wrappedNativeToken,
         address[] memory supportedAssets
-    ) ERC20(tokenName(), tokenSymbol()) {
+    ) internal onlyInitializing {
+        __ERC20_init(tokenName(), tokenSymbol());
+        __ReentrancyGuard_init();
+
         QUOTE_SIGNER = quoteSigner;
         uint256 i;
         uint256 n = supportedAssets.length;
@@ -133,6 +140,8 @@ abstract contract SetwisePoolBase is ERC20, ReentrancyGuard {
         QUOTE_DOMAIN_SEPARATOR = createDomainSeparator(NAME, VERSION, address(this));
         WRAPPED_NATIVE_TOKEN = wrappedNativeToken;
     }
+
+    uint256[43] private __gap;
 
     // Allows the receipt of ETH directly
     receive() external payable {}

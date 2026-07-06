@@ -1,6 +1,6 @@
 import { expect } from "chai";
 import type { Signer } from "ethers";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 const singleAssetDepositTypes = {
   SingleAssetDeposit: [
@@ -35,10 +35,15 @@ describe("SetwiseRebalancingPool", function () {
     const stock = await mockFactory.deploy("Tokenized Stock", "STOCK");
 
     const poolFactory = await ethers.getContractFactory("SetwiseRebalancingPool");
-    const pool = await poolFactory.deploy(quoteSigner.address, await wrappedNative.getAddress(), [
-      await wrappedNative.getAddress(),
-      await stock.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      poolFactory,
+      [
+        quoteSigner.address,
+        await wrappedNative.getAddress(),
+        [await wrappedNative.getAddress(), await stock.getAddress()],
+      ],
+      { kind: "uups" },
+    );
 
     return { guardian, investor, owner, pool, quoteSigner, secondInvestor, stock, wrappedNative };
   }
@@ -239,10 +244,15 @@ describe("SetwiseRebalancingPool", function () {
     const signerFactory = await ethers.getContractFactory("MockERC1271Signer");
     const contractSigner = await signerFactory.deploy(quoteSigner.address);
     const poolFactory = await ethers.getContractFactory("SetwiseRebalancingPool");
-    const pool = await poolFactory.deploy(await contractSigner.getAddress(), await wrappedNative.getAddress(), [
-      await wrappedNative.getAddress(),
-      await stock.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      poolFactory,
+      [
+        await contractSigner.getAddress(),
+        await wrappedNative.getAddress(),
+        [await wrappedNative.getAddress(), await stock.getAddress()],
+      ],
+      { kind: "uups" },
+    );
     const amount = 80n;
     const shares = 20n;
     const quoteDeadline = await deadline();
@@ -274,10 +284,15 @@ describe("SetwiseRebalancingPool", function () {
   it("binds swap quotes to the paying wallet", async function () {
     const { investor, quoteSigner, secondInvestor, stock, wrappedNative } = await deployFixture();
     const poolFactory = await ethers.getContractFactory("SetwisePool");
-    const pool = await poolFactory.deploy(quoteSigner.address, await wrappedNative.getAddress(), [
-      await wrappedNative.getAddress(),
-      await stock.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      poolFactory,
+      [
+        quoteSigner.address,
+        await wrappedNative.getAddress(),
+        [await wrappedNative.getAddress(), await stock.getAddress()],
+      ],
+      { kind: "uups" },
+    );
     const poolAddress = await pool.getAddress();
     const stockAddress = await stock.getAddress();
     const wrappedNativeAddress = await wrappedNative.getAddress();
@@ -323,10 +338,15 @@ describe("SetwiseRebalancingPool", function () {
   it("requires the exact signed native input amount", async function () {
     const { investor, quoteSigner, stock, wrappedNative } = await deployFixture();
     const poolFactory = await ethers.getContractFactory("SetwisePool");
-    const pool = await poolFactory.deploy(quoteSigner.address, await wrappedNative.getAddress(), [
-      await wrappedNative.getAddress(),
-      await stock.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      poolFactory,
+      [
+        quoteSigner.address,
+        await wrappedNative.getAddress(),
+        [await wrappedNative.getAddress(), await stock.getAddress()],
+      ],
+      { kind: "uups" },
+    );
     const quoteId = ethers.id("native-input-value");
     const quoteDeadline = await deadline();
 

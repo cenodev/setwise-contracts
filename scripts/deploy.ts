@@ -1,4 +1,4 @@
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 async function main(): Promise<void> {
   const quoteSigner = process.env.SETWISE_QUOTE_SIGNER;
@@ -15,10 +15,15 @@ async function main(): Promise<void> {
   }
 
   const poolFactory = await ethers.getContractFactory("SetwiseRebalancingPool");
-  const pool = await poolFactory.deploy(quoteSigner, wrappedNativeToken, supportedAssets);
+  const pool = await upgrades.deployProxy(poolFactory, [quoteSigner, wrappedNativeToken, supportedAssets], {
+    kind: "uups",
+  });
   await pool.waitForDeployment();
 
-  console.log("SetwiseRebalancingPool:", await pool.getAddress());
+  const proxyAddress = await pool.getAddress();
+  const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+  console.log("SetwiseRebalancingPool proxy:", proxyAddress);
+  console.log("SetwiseRebalancingPool implementation:", implementationAddress);
 }
 
 main().catch((error: unknown) => {

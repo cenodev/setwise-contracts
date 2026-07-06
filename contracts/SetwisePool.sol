@@ -15,7 +15,8 @@
 
 pragma solidity ^0.8.19;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import {UUPSUpgradeable} from "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
@@ -24,7 +25,7 @@ import {IWrappedNativeToken} from "./interfaces/IWrappedNativeToken.sol";
 
 import {SetwisePoolBase} from "./SetwisePoolBase.sol";
 
-contract SetwisePool is SetwisePoolBase, Ownable {
+contract SetwisePool is SetwisePoolBase, OwnableUpgradeable, UUPSUpgradeable {
     using SafeERC20 for IERC20;
     using EnumerableSet for EnumerableSet.AddressSet;
 
@@ -43,11 +44,34 @@ contract SetwisePool is SetwisePoolBase, Ownable {
         _;
     }
 
-    constructor(
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(
         address quoteSigner,
         address wrappedNativeToken,
         address[] memory supportedAssets
-    ) SetwisePoolBase(quoteSigner, wrappedNativeToken, supportedAssets) {}
+    ) public virtual initializer {
+        __SetwisePool_init(quoteSigner, wrappedNativeToken, supportedAssets);
+    }
+
+    // solhint-disable-next-line func-name-mixedcase
+    function __SetwisePool_init(
+        address quoteSigner,
+        address wrappedNativeToken,
+        address[] memory supportedAssets
+    ) internal onlyInitializing {
+        __SetwisePoolBase_init(quoteSigner, wrappedNativeToken, supportedAssets);
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function _authorizeUpgrade(address) internal override onlyOwner {
+        // Upgrade authorization is enforced by onlyOwner.
+    }
 
     function isTradingPaused() public view virtual returns (bool) {
         return false;
@@ -333,4 +357,6 @@ contract SetwisePool is SetwisePoolBase, Ownable {
 
         emit SwapExecuted(inputAsset, outputAsset, recipient, inputAmount, outputAmount, auxiliaryData);
     }
+
+    uint256[50] private __gap;
 }

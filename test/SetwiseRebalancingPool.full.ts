@@ -1,7 +1,7 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import type { Signer } from "ethers";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 import type { MockERC20, MockWrappedNative, SetwiseRebalancingPool } from "../types";
 import {
@@ -22,11 +22,15 @@ describe("SetwiseRebalancingPool full behavior", function () {
     const stock = await tokenFactory.deploy("Tokenized Stock", "STOCK");
     const secondStock = await tokenFactory.deploy("Second Stock", "STOCK2");
     const poolFactory = await ethers.getContractFactory("SetwiseRebalancingPool");
-    const pool = await poolFactory.deploy(quoteSigner.address, await wrapped.getAddress(), [
-      await wrapped.getAddress(),
-      await stock.getAddress(),
-      await secondStock.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      poolFactory,
+      [
+        quoteSigner.address,
+        await wrapped.getAddress(),
+        [await wrapped.getAddress(), await stock.getAddress(), await secondStock.getAddress()],
+      ],
+      { kind: "uups" },
+    );
 
     return { guardian, investor, other, owner, pool, quoteSigner, recipient, secondStock, stock, wrapped };
   }
@@ -36,9 +40,11 @@ describe("SetwiseRebalancingPool full behavior", function () {
     const wrappedFactory = await ethers.getContractFactory("MockWrappedNative");
     const wrapped = await wrappedFactory.deploy();
     const harnessFactory = await ethers.getContractFactory("SetwiseRebalancingPoolHarness");
-    const harness = await harnessFactory.deploy(quoteSigner.address, await wrapped.getAddress(), [
-      await wrapped.getAddress(),
-    ]);
+    const harness = await upgrades.deployProxy(
+      harnessFactory,
+      [quoteSigner.address, await wrapped.getAddress(), [await wrapped.getAddress()]],
+      { kind: "uups" },
+    );
     return { harness, owner, quoteSigner, wrapped };
   }
 
@@ -489,7 +495,9 @@ describe("SetwiseRebalancingPool full behavior", function () {
     ];
     const addresses = await Promise.all(tokens.map((token) => token.getAddress()));
     const poolFactory = await ethers.getContractFactory("SetwiseRebalancingPool");
-    const pool = await poolFactory.deploy(quoteSigner.address, addresses[0], addresses);
+    const pool = await upgrades.deployProxy(poolFactory, [quoteSigner.address, addresses[0], addresses], {
+      kind: "uups",
+    });
     const poolAddress = await pool.getAddress();
     const callbackData = [
       pool.interface.encodeFunctionData("swapExactNativeForAsset", [

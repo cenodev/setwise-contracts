@@ -16,14 +16,16 @@
 pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import {ERC20Permit} from "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
+import {
+    ERC20PermitUpgradeable
+} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC20PermitUpgradeable.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 import {IWrappedNativeToken} from "./interfaces/IWrappedNativeToken.sol";
 
 import {SetwisePool} from "./SetwisePool.sol";
 
-contract SetwiseRebalancingPool is SetwisePool, ERC20Permit {
+contract SetwiseRebalancingPool is SetwisePool, ERC20PermitUpgradeable {
     using SafeERC20 for IERC20;
 
     uint256 internal constant ONE_IN_SIX_DECIMALS = 1e6;
@@ -35,11 +37,14 @@ contract SetwiseRebalancingPool is SetwisePool, ERC20Permit {
 
     event GuardianChanged(address indexed newAddress);
 
-    constructor(
+    function initialize(
         address quoteSigner,
         address wrappedNativeToken,
         address[] memory supportedAssets
-    ) SetwisePool(quoteSigner, wrappedNativeToken, supportedAssets) ERC20Permit("Setwise Portfolio Share") {}
+    ) public override initializer {
+        __SetwisePool_init(quoteSigner, wrappedNativeToken, supportedAssets);
+        __ERC20Permit_init("Setwise Portfolio Share");
+    }
 
     /*
     Guardian emergency functionality.
@@ -279,4 +284,6 @@ contract SetwiseRebalancingPool is SetwisePool, ERC20Permit {
 
         emit SwapExecuted(inputAsset, outputAsset, recipient, inputAmount, outputAmount, auxiliaryData);
     }
+
+    uint256[49] private __gap;
 }

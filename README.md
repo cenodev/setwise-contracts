@@ -9,9 +9,12 @@ while each trade moves the pool toward its target portfolio allocation.
 ## Contracts
 
 - `SetwisePoolBase`: portfolio shares, supported assets, deposits, withdrawals, swaps, and quote verification.
-- `SetwisePool`: asset balance accounting and the standard signed-quote execution paths.
+- `SetwisePool`: UUPS upgrade authorization, asset balance accounting, and standard signed-quote execution paths.
 - `SetwiseRebalancingPool`: the deployable pool with packed approximate-invariant checks, ERC-2612 permits, and a
   guardian-controlled trading pause.
+- `MockBStock`: a testnet BEP-20 mock with a BEP-677/EIP-8056-compatible scaled-UI multiplier.
+- `MockUSDT`: an owner-mintable, 18-decimal testnet token matching BSC USDT units.
+- `MockWrappedBNB`: a testnet wrapped-native token for native swap testing.
 
 The portfolio share token is named `Setwise Portfolio Share` with symbol `SETWISE`.
 
@@ -65,6 +68,12 @@ bun run lint
 
 ## Deployment
 
+Pools are deployed as UUPS proxies. The proxy address is the permanent integration address; implementation addresses
+change during upgrades. Only the pool owner can authorize an upgrade. Use a Safe or timelock as the owner for any
+production deployment.
+
+### Existing assets
+
 Set the following environment variables:
 
 - `SETWISE_QUOTE_SIGNER`: address authorised to sign pool quotes.
@@ -76,6 +85,40 @@ Then run:
 ```sh
 bun run deploy:contracts --network <network>
 ```
+
+### BSC Testnet with mock bStocks
+
+BSC Testnet uses chain ID `97`. Configure a funded testnet deployer without committing its private key:
+
+```sh
+npx hardhat vars set DEPLOYER_PRIVATE_KEY
+# Optional; the official public RPC is used by default.
+npx hardhat vars set BSC_TESTNET_RPC_URL
+
+export SETWISE_QUOTE_SIGNER=<quote-signer-address>
+export SETWISE_OWNER=<upgrade-owner-address>
+export MOCK_BSTOCK_SUPPLY=1000000
+bun run deploy:bsc-testnet
+```
+
+The script deploys mock `mbAAPL`, `mbNVDA`, `mbTSLA`, `mbAMZN`, USDT, wrapped BNB, and a `SetwiseRebalancingPool` UUPS
+proxy. By default it also makes a signed bootstrap deposit so the RFQ API sees nonzero inventory and LP supply. It
+writes addresses to `deployments/bsc-testnet.json` and a directly consumable RFQ API configuration to
+`deployments/bsc-testnet.rfq-pool-config.json`.
+
+Mock bStocks keep ordinary raw ERC-20 balances for transfers and pool accounting. `uiMultiplier`, `scaledBalanceOf`, and
+`scaledTotalSupply` model bStocks corporate-action display adjustments without rebasing those raw balances.
+
+### Upgrades
+
+After compiling and testing a storage-compatible implementation:
+
+```sh
+export SETWISE_PROXY_ADDRESS=<proxy-address>
+bun run upgrade:bsc-testnet
+```
+
+The upgrade script validates storage compatibility before submitting the owner-authorized UUPS upgrade.
 
 ## License
 

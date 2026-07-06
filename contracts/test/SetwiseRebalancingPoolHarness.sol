@@ -3,13 +3,8 @@ pragma solidity ^0.8.19;
 
 import {SetwiseRebalancingPool} from "../SetwiseRebalancingPool.sol";
 
+/// @custom:oz-upgrades-unsafe-allow missing-initializer
 contract SetwiseRebalancingPoolHarness is SetwiseRebalancingPool {
-    constructor(
-        address quoteSigner,
-        address wrappedNativeToken,
-        address[] memory supportedAssets
-    ) SetwiseRebalancingPool(quoteSigner, wrappedNativeToken, supportedAssets) {}
-
     function exposedCheckInvariant(
         uint256 qX,
         uint256 qY,

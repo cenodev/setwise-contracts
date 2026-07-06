@@ -1,7 +1,7 @@
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import type { Signer } from "ethers";
-import { ethers } from "hardhat";
+import { ethers, upgrades } from "hardhat";
 
 import type { MockERC20, MockWrappedNative, SetwisePool } from "../types";
 import {
@@ -22,11 +22,15 @@ describe("SetwisePool full behavior", function () {
     const stock = await tokenFactory.deploy("Tokenized Stock", "STOCK");
     const secondStock = await tokenFactory.deploy("Second Stock", "STOCK2");
     const poolFactory = await ethers.getContractFactory("SetwisePool");
-    const pool = await poolFactory.deploy(quoteSigner.address, await wrapped.getAddress(), [
-      await wrapped.getAddress(),
-      await stock.getAddress(),
-      await secondStock.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      poolFactory,
+      [
+        quoteSigner.address,
+        await wrapped.getAddress(),
+        [await wrapped.getAddress(), await stock.getAddress(), await secondStock.getAddress()],
+      ],
+      { kind: "uups" },
+    );
 
     return { investor, other, owner, pool, quoteSigner, recipient, secondStock, stock, wrapped };
   }
@@ -134,9 +138,11 @@ describe("SetwisePool full behavior", function () {
     const feeFactory = await ethers.getContractFactory("MockFeeOnTransferToken");
     const feeToken = await feeFactory.deploy();
     const poolFactory = await ethers.getContractFactory("SetwisePool");
-    const pool = await poolFactory.deploy(quoteSigner.address, await wrapped.getAddress(), [
-      await feeToken.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      poolFactory,
+      [quoteSigner.address, await wrapped.getAddress(), [await feeToken.getAddress()]],
+      { kind: "uups" },
+    );
     const poolAddress = await pool.getAddress();
     const amount = 100n;
     const now = BigInt(await time.latest());
@@ -692,10 +698,11 @@ describe("SetwisePool full behavior", function () {
   it("covers paused branches on every standard swap implementation", async function () {
     const { investor, quoteSigner, recipient, stock, wrapped } = await loadFixture(deployFixture);
     const harnessFactory = await ethers.getContractFactory("SetwisePoolPauseHarness");
-    const pool = await harnessFactory.deploy(quoteSigner.address, await wrapped.getAddress(), [
-      await wrapped.getAddress(),
-      await stock.getAddress(),
-    ]);
+    const pool = await upgrades.deployProxy(
+      harnessFactory,
+      [quoteSigner.address, await wrapped.getAddress(), [await wrapped.getAddress(), await stock.getAddress()]],
+      { kind: "uups" },
+    );
     const stockAddress = await stock.getAddress();
     const deadline = await futureDeadline();
     await pool.setPaused(true);
@@ -754,7 +761,9 @@ describe("SetwisePool full behavior", function () {
     }
     const addresses = await Promise.all(tokens.map((token) => token.getAddress()));
     const poolFactory = await ethers.getContractFactory("SetwisePool");
-    const pool = await poolFactory.deploy(quoteSigner.address, addresses[0], addresses);
+    const pool = await upgrades.deployProxy(poolFactory, [quoteSigner.address, addresses[0], addresses], {
+      kind: "uups",
+    });
     const poolAddress = await pool.getAddress();
     const callbackData = [
       pool.interface.encodeFunctionData("depositPortfolio", [[], 0n, 0n, ethers.ZeroHash, 0n, "0x"]),
