@@ -3,10 +3,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const mockStocks = [
-  { marketSymbol: "AAPLBUSDT", name: "Mock Apple bStock", symbol: "mbAAPL", underlying: "AAPL" },
+  { fixedPriceUsd: "210", marketSymbol: "AAPLBUSDT", name: "Mock Apple bStock", symbol: "mbAAPL", underlying: "AAPL" },
   { marketSymbol: "NVDABUSDT", name: "Mock NVIDIA bStock", symbol: "mbNVDA", underlying: "NVDA" },
   { marketSymbol: "TSLABUSDT", name: "Mock Tesla bStock", symbol: "mbTSLA", underlying: "TSLA" },
-  { marketSymbol: "AMZNBUSDT", name: "Mock Amazon bStock", symbol: "mbAMZN", underlying: "AMZN" },
+  { fixedPriceUsd: "220", marketSymbol: "AMZNBUSDT", name: "Mock Amazon bStock", symbol: "mbAMZN", underlying: "AMZN" },
 ];
 
 async function main(): Promise<void> {
@@ -52,6 +52,7 @@ async function main(): Promise<void> {
   const stockFactory = await ethers.getContractFactory("MockBStock");
   const stocks: Array<{
     address: string;
+    fixedPriceUsd?: string;
     marketSymbol: string;
     name: string;
     symbol: string;
@@ -207,7 +208,9 @@ async function main(): Promise<void> {
             eligibility: "not-required",
           },
           multiplier: { type: "erc8056", decimals: 18 },
-          price: { type: "binance", symbol: stock.marketSymbol, quoteCurrency: "USDT", quoteUsd: "1" },
+          price: stock.fixedPriceUsd
+            ? { type: "fixed", usd: stock.fixedPriceUsd, quoteCurrency: "USD" }
+            : { type: "binance", symbol: stock.marketSymbol, quoteCurrency: "USDT", quoteUsd: "1" },
         })),
       ],
     },
