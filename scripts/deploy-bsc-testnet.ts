@@ -2,12 +2,58 @@ import { ethers, network, upgrades } from "hardhat";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+const wrappedNativeWeight = 5;
+const usdtWeight = 35;
+
 const mockStocks = [
-  { fixedPriceUsd: "210", marketSymbol: "AAPLBUSDT", name: "Mock Apple bStock", symbol: "mbAAPL", underlying: "AAPL" },
-  { marketSymbol: "NVDABUSDT", name: "Mock NVIDIA bStock", symbol: "mbNVDA", underlying: "NVDA" },
-  { marketSymbol: "TSLABUSDT", name: "Mock Tesla bStock", symbol: "mbTSLA", underlying: "TSLA" },
-  { fixedPriceUsd: "220", marketSymbol: "AMZNBUSDT", name: "Mock Amazon bStock", symbol: "mbAMZN", underlying: "AMZN" },
+  { marketSymbol: "SPCXBUSDT", name: "Mock SpaceX bStock", symbol: "mbSPCX", underlying: "SPCX", weight: 18 },
+  { marketSymbol: "SNDKBUSDT", name: "Mock SanDisk bStock", symbol: "mbSNDK", underlying: "SNDK", weight: 7 },
+  { marketSymbol: "PLTRBUSDT", name: "Mock Palantir bStock", symbol: "mbPLTR", underlying: "PLTR", weight: 7 },
+  { marketSymbol: "QCOMBUSDT", name: "Mock Qualcomm bStock", symbol: "mbQCOM", underlying: "QCOM", weight: 7 },
+  {
+    marketSymbol: "DRAMBUSDT",
+    name: "Mock Roundhill Memory ETF bStock",
+    symbol: "mbDRAM",
+    underlying: "DRAM",
+    weight: 6,
+  },
+  { marketSymbol: "GOOGLBUSDT", name: "Mock Alphabet bStock", symbol: "mbGOOGL", underlying: "GOOGL", weight: 6 },
+  { marketSymbol: "MUBUSDT", name: "Mock Micron bStock", symbol: "mbMU", underlying: "MU", weight: 5 },
+  { marketSymbol: "NVDABUSDT", name: "Mock NVIDIA bStock", symbol: "mbNVDA", underlying: "NVDA", weight: 4 },
 ];
+
+async function fetchBinanceMidUsd(symbol: string): Promise<number> {
+  const baseUrl = process.env.BINANCE_API_BASE_URL ?? "https://api.binance.com";
+  const url = new URL("/api/v3/depth", baseUrl);
+  url.searchParams.set("symbol", symbol);
+  url.searchParams.set("limit", "5");
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch Binance depth for ${symbol}: ${response.status} ${response.statusText}`);
+  }
+
+  const depth = (await response.json()) as { asks?: Array<[string, string]>; bids?: Array<[string, string]> };
+  const bid = Number(depth.bids?.[0]?.[0]);
+  const ask = Number(depth.asks?.[0]?.[0]);
+  if (!Number.isFinite(bid) || !Number.isFinite(ask) || bid <= 0 || ask <= 0) {
+    throw new Error(`Binance depth for ${symbol} did not include a usable best bid/ask`);
+  }
+
+  return (bid + ask) / 2;
+}
+
+function parseTokenAmount(amount: number): bigint {
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error(`Invalid bootstrap token amount: ${amount}`);
+  }
+
+  return ethers.parseUnits(amount.toFixed(18), 18);
+}
+
+function formatNumber(value: number, decimals = 8): string {
+  return value.toFixed(decimals).replace(/\.?0+$/, "");
+}
 
 async function main(): Promise<void> {
   const { chainId } = await ethers.provider.getNetwork();
@@ -25,10 +71,12 @@ async function main(): Promise<void> {
   const poolOwner = process.env.SETWISE_OWNER ?? deployerAddress;
   const initialSupply = ethers.parseUnits(process.env.MOCK_BSTOCK_SUPPLY ?? "1000000", 18);
   const bootstrapPool = process.env.BOOTSTRAP_POOL !== "false";
-  const wrappedSeed = ethers.parseUnits(process.env.MOCK_WBNB_SEED ?? "0.1", 18);
-  const usdtSeed = ethers.parseUnits(process.env.MOCK_USDT_SEED ?? "100000", 18);
-  const stockSeed = ethers.parseUnits(process.env.MOCK_BSTOCK_SEED ?? "100", 18);
+  const bootstrapNotionalUsd = Number(process.env.MOCK_POOL_NOTIONAL_USD ?? "100");
   const initialPoolShares = ethers.parseUnits(process.env.MOCK_POOL_SHARES ?? "1000", 18);
+
+  if (!Number.isFinite(bootstrapNotionalUsd) || bootstrapNotionalUsd <= 0) {
+    throw new Error("MOCK_POOL_NOTIONAL_USD must be a positive number");
+  }
 
   if (bootstrapPool && quoteSigner.toLowerCase() !== deployerAddress.toLowerCase()) {
     throw new Error(
@@ -57,6 +105,7 @@ async function main(): Promise<void> {
     name: string;
     symbol: string;
     underlying: string;
+    weight: number;
   }> = [];
   for (const config of mockStocks) {
     const stock = await stockFactory.deploy(config.name, config.symbol, deployerAddress);
@@ -73,17 +122,49 @@ async function main(): Promise<void> {
   await pool.waitForDeployment();
   const proxyAddress = await pool.getAddress();
   const implementationAddress = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+  let bootstrapDetails: null | {
+    targetNotionalUsd: string;
+    pricesUsd: Record<string, string>;
+    depositAmounts: Record<string, string>;
+  } = null;
 
   if (bootstrapPool) {
+    const totalWeight = wrappedNativeWeight + usdtWeight + stocks.reduce((sum, stock) => sum + stock.weight, 0);
+    const targetUsd = (weight: number) => (bootstrapNotionalUsd * weight) / totalWeight;
+    const pricesUsd: Record<string, string> = { USDT: "1" };
+    const depositAmountsBySymbol: Record<string, string> = {};
+
+    const wrappedPriceUsd = await fetchBinanceMidUsd("BNBUSDT");
+    pricesUsd.WBNB = formatNumber(wrappedPriceUsd);
+    const wrappedSeed = parseTokenAmount(targetUsd(wrappedNativeWeight) / wrappedPriceUsd);
+    const usdtSeed = parseTokenAmount(targetUsd(usdtWeight));
+    depositAmountsBySymbol.WBNB = ethers.formatUnits(wrappedSeed, 18);
+    depositAmountsBySymbol.USDT = ethers.formatUnits(usdtSeed, 18);
+
+    const stockSeeds: bigint[] = [];
+    for (const stock of stocks) {
+      const priceUsd = stock.fixedPriceUsd ? Number(stock.fixedPriceUsd) : await fetchBinanceMidUsd(stock.marketSymbol);
+      pricesUsd[`${stock.underlying}B`] = formatNumber(priceUsd);
+      const seed = parseTokenAmount(targetUsd(stock.weight) / priceUsd);
+      stockSeeds.push(seed);
+      depositAmountsBySymbol[`${stock.underlying}B`] = ethers.formatUnits(seed, 18);
+    }
+
+    bootstrapDetails = {
+      targetNotionalUsd: formatNumber(bootstrapNotionalUsd, 2),
+      pricesUsd,
+      depositAmounts: depositAmountsBySymbol,
+    };
+
     await (await wrapped.deposit({ value: wrappedSeed })).wait();
     await (await wrapped.approve(proxyAddress, wrappedSeed)).wait();
     await (await usdt.approve(proxyAddress, usdtSeed)).wait();
-    for (const stock of stocks) {
+    for (const [index, stock] of stocks.entries()) {
       const token = stockFactory.attach(stock.address);
-      await (await token.approve(proxyAddress, stockSeed)).wait();
+      await (await token.approve(proxyAddress, stockSeeds[index]!)).wait();
     }
 
-    const depositAmounts = [wrappedSeed, usdtSeed, ...stocks.map(() => stockSeed)];
+    const depositAmounts = [wrappedSeed, usdtSeed, ...stockSeeds];
     const latestBlock = await ethers.provider.getBlock("latest");
     const deadline = BigInt(latestBlock!.timestamp + 3_600);
     const quoteId = ethers.id(`setwise-bsc-testnet-bootstrap:${proxyAddress}`);
@@ -133,11 +214,12 @@ async function main(): Promise<void> {
     poolProxy: proxyAddress,
     quoteSigner,
     seeded: bootstrapPool,
+    seedDetails: bootstrapDetails,
   };
 
   const rfqPoolConfig = [
     {
-      id: "bstocks-usdt-bsc-testnet",
+      id: "bstock-ai-bsc-testnet",
       chainId: Number(chainId),
       chainName: "BSC Testnet",
       poolAddress: proxyAddress,
@@ -160,7 +242,7 @@ async function main(): Promise<void> {
         maxInventoryPremiumBps: 0,
         requireExternalLiquidity: true,
       },
-      lpToken: { symbol: "SET-BSTOCKS-LP", decimals: 18 },
+      lpToken: { symbol: "SET-BSTOCK-AI-LP", decimals: 18 },
       pairs: stocks.map((stock) => ({
         assets: ["USDT-BSC-TESTNET", `${stock.underlying}B-BSC-TESTNET`],
         feeBps: 10,
@@ -175,7 +257,7 @@ async function main(): Promise<void> {
           name: "Mock Wrapped BNB",
           address: wrappedAddress,
           decimals: 18,
-          weight: 5,
+          weight: wrappedNativeWeight,
           tokenStandard: "BEP-20",
           multiplier: { type: "fixed", value: "1" },
           price: { type: "binance", symbol: "BNBUSDT", quoteCurrency: "USDT", quoteUsd: "1" },
@@ -186,7 +268,7 @@ async function main(): Promise<void> {
           name: "Mock Tether USD",
           address: usdtAddress,
           decimals: 18,
-          weight: 35,
+          weight: usdtWeight,
           tokenStandard: "BEP-20",
           multiplier: { type: "fixed", value: "1" },
           price: { type: "fixed", usd: "1", quoteCurrency: "USD" },
@@ -197,7 +279,7 @@ async function main(): Promise<void> {
           name: stock.name,
           address: stock.address,
           decimals: 18,
-          weight: 15,
+          weight: stock.weight,
           underlying: { symbol: stock.underlying },
           issuer: "Mock BTech Holdings Limited",
           product: "Mock Binance bStock certificate",

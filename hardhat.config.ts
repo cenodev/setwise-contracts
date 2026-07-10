@@ -93,6 +93,7 @@ const config: HardhatUserConfig = {
     "bsc-testnet": {
       accounts: normalizedDeployerPrivateKey ? [normalizedDeployerPrivateKey] : [],
       chainId: chainIds["bsc-testnet"],
+      gasPrice: Number(process.env.BSC_TESTNET_GAS_PRICE_WEI ?? "1000000000"),
       url: vars.get("BSC_TESTNET_RPC_URL", "https://data-seed-prebsc-1-s1.bnbchain.org:8545"),
     },
     mainnet: getChainConfig("mainnet"),
