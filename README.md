@@ -63,6 +63,7 @@ Requires [Bun](https://bun.sh/).
 bun install
 bun run compile
 bun run test
+bun run coverage
 bun run lint
 ```
 
@@ -98,13 +99,33 @@ npx hardhat vars set BSC_TESTNET_RPC_URL
 export SETWISE_QUOTE_SIGNER=<quote-signer-address>
 export SETWISE_OWNER=<upgrade-owner-address>
 export MOCK_BSTOCK_SUPPLY=1000000
+# Optional; defaults to a $100 bootstrap portfolio.
+export MOCK_POOL_NOTIONAL_USD=100
 bun run deploy:bsc-testnet
 ```
 
-The script deploys mock `mbAAPL`, `mbNVDA`, `mbTSLA`, `mbAMZN`, USDT, wrapped BNB, and a `SetwiseRebalancingPool` UUPS
-proxy. By default it also makes a signed bootstrap deposit so the RFQ API sees nonzero inventory and LP supply. It
-writes addresses to `deployments/bsc-testnet.json` and a directly consumable RFQ API configuration to
-`deployments/bsc-testnet.rfq-pool-config.json`.
+The script deploys the BStock AI test portfolio, mock USDT, wrapped BNB, and a `SetwiseRebalancingPool` UUPS proxy. The
+portfolio is weighted using Binance bStock order-book liquidity:
+
+| Asset  | Target weight |
+| ------ | ------------: |
+| USDT   |           35% |
+| SPCXB  |           18% |
+| SNDKB  |            7% |
+| PLTRB  |            7% |
+| QCOMB  |            7% |
+| DRAMB  |            6% |
+| GOOGLB |            6% |
+| MUB    |            5% |
+| WBNB   |            5% |
+| NVDAB  |            4% |
+
+By default, the script fetches Binance best bid and ask prices and makes a signed `$100` bootstrap deposit so the RFQ
+API sees nonzero inventory and LP supply. Set `MOCK_POOL_NOTIONAL_USD` to change its size, or set `BOOTSTRAP_POOL=false`
+to skip it. Bootstrapping requires the deployer to be the quote signer.
+
+Deployment addresses and bootstrap details are written to `deployments/bsc-testnet.json`. A directly consumable RFQ API
+configuration is written to `deployments/bsc-testnet.rfq-pool-config.json`.
 
 Mock bStocks keep ordinary raw ERC-20 balances for transfers and pool accounting. `uiMultiplier`, `scaledBalanceOf`, and
 `scaledTotalSupply` model bStocks corporate-action display adjustments without rebasing those raw balances.
@@ -119,6 +140,14 @@ bun run upgrade:bsc-testnet
 ```
 
 The upgrade script validates storage compatibility before submitting the owner-authorized UUPS upgrade.
+
+## TODO
+
+- Add quote-signer rotation, quote cancellation, and quote IDs to execution events.
+- Add validated asset removal and stricter asset onboarding checks.
+- Verify deployed proxy and implementation contracts on block explorers.
+- Document and test the multisig/timelock production upgrade procedure.
+- Add invariant fuzzing and complete an independent security audit before using real funds.
 
 ## License
 
