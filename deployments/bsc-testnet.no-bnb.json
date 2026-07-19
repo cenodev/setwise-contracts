@@ -1,0 +1,105 @@
+{
+  "chainId": 97,
+  "deployedAt": "2026-07-19T12:32:27.628Z",
+  "deployer": "0x0B37DDA72EbC2E9Cd177D1455139e7355d3a9e50",
+  "mockBStocks": [
+    {
+      "marketSymbol": "SPCXBUSDT",
+      "name": "Mock SpaceX bStock",
+      "symbol": "mbSPCX",
+      "underlying": "SPCX",
+      "weight": 18,
+      "address": "0x75D74Ab8EcFF5215bbad450103ceDF532C23Ae46"
+    },
+    {
+      "marketSymbol": "SNDKBUSDT",
+      "name": "Mock SanDisk bStock",
+      "symbol": "mbSNDK",
+      "underlying": "SNDK",
+      "weight": 7,
+      "address": "0xb106721f4f4D515c3528278DA64017cb6fc120F1"
+    },
+    {
+      "marketSymbol": "PLTRBUSDT",
+      "name": "Mock Palantir bStock",
+      "symbol": "mbPLTR",
+      "underlying": "PLTR",
+      "weight": 7,
+      "address": "0x610B80d790D8895128b49d49026EC8FA9189559d"
+    },
+    {
+      "marketSymbol": "QCOMBUSDT",
+      "name": "Mock Qualcomm bStock",
+      "symbol": "mbQCOM",
+      "underlying": "QCOM",
+      "weight": 7,
+      "address": "0xcA60A189a5Edb00549FFD05cF855AFEb7E42e366"
+    },
+    {
+      "marketSymbol": "DRAMBUSDT",
+      "name": "Mock Roundhill Memory ETF bStock",
+      "symbol": "mbDRAM",
+      "underlying": "DRAM",
+      "weight": 6,
+      "address": "0xcFd38Ce016Bf57997A238c67Eb591b9182307471"
+    },
+    {
+      "marketSymbol": "GOOGLBUSDT",
+      "name": "Mock Alphabet bStock",
+      "symbol": "mbGOOGL",
+      "underlying": "GOOGL",
+      "weight": 6,
+      "address": "0x90f0d4f7F58469ba56A09a679228873E71978264"
+    },
+    {
+      "marketSymbol": "MUBUSDT",
+      "name": "Mock Micron bStock",
+      "symbol": "mbMU",
+      "underlying": "MU",
+      "weight": 5,
+      "address": "0xaE9Bb4b368a9C5C6218Fae97327A5331a72596EA"
+    },
+    {
+      "marketSymbol": "NVDABUSDT",
+      "name": "Mock NVIDIA bStock",
+      "symbol": "mbNVDA",
+      "underlying": "NVDA",
+      "weight": 4,
+      "address": "0x4825Ce7b23d59A443BAD34864132971582782Fb2"
+    }
+  ],
+  "mockUSDT": "0x0827541D8d43Bb891865440B50e6713D4C55be5A",
+  "mockWrappedNative": "0x119FF2a8b74dfCE4c378CE4bd2c10201bf47e395",
+  "network": "bsc-testnet",
+  "poolImplementation": "0xCC1A88C7C0f01f54dE8d47DAA05e4FF9CE3F6330",
+  "poolOwner": "0x0B37DDA72EbC2E9Cd177D1455139e7355d3a9e50",
+  "poolProxy": "0xA54D041eD831BBE2D6F97107Ab3aD9f9682C392a",
+  "quoteSigner": "0x0B37DDA72EbC2E9Cd177D1455139e7355d3a9e50",
+  "seeded": true,
+  "seedDetails": {
+    "targetNotionalUsd": "100",
+    "pricesUsd": {
+      "USDT": "1",
+      "SPCXB": "127.465",
+      "SNDKB": "1358.015",
+      "PLTRB": "131.78",
+      "QCOMB": "171.27",
+      "DRAMB": "52.785",
+      "GOOGLB": "346.53",
+      "MUB": "850.71",
+      "NVDAB": "202.55"
+    },
+    "depositAmounts": {
+      "USDT": "40.0",
+      "SPCXB": "0.141215235554858182",
+      "SNDKB": "0.00515458223951871",
+      "PLTRB": "0.053118834421004707",
+      "QCOMB": "0.040871139137035085",
+      "DRAMB": "0.113668655868144369",
+      "GOOGLB": "0.017314518223530431",
+      "MUB": "0.005877443547154729",
+      "NVDAB": "0.019748210318439891"
+    }
+  },
+  "sourceDeployment": "bsc-testnet.json"
+}

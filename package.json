@@ -69,6 +69,7 @@
     "compile": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat compile",
     "coverage": "hardhat coverage --solcoverjs ./.solcover.js --temp artifacts --testfiles \"test/**/*.ts\" && bun run typechain",
     "deploy:bsc-testnet": "hardhat run scripts/deploy-bsc-testnet.ts --network bsc-testnet",
+    "deploy:no-bnb-pool:bsc-testnet": "hardhat run scripts/deploy-no-bnb-pool-bsc-testnet.ts --network bsc-testnet",
     "deploy:faucet:bsc-testnet": "hardhat run scripts/deploy-faucet-bsc-testnet.ts --network bsc-testnet",
     "deploy:contracts": "hardhat run scripts/deploy.ts",
     "lint": "bun run lint:sol && bun run lint:ts && bun run prettier:check",

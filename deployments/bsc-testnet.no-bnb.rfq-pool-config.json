@@ -1,0 +1,369 @@
+[
+  {
+    "id": "bstock-ai-no-bnb-bsc-testnet",
+    "chainId": 97,
+    "chainName": "BSC Testnet",
+    "poolAddress": "0xA54D041eD831BBE2D6F97107Ab3aD9f9682C392a",
+    "rpcUrl": "https://data-seed-prebsc-1-s1.bnbchain.org:8545",
+    "contractVersion": "2.0.0",
+    "k": "0.5",
+    "feeBps": 10,
+    "quoteTtlSeconds": 10,
+    "allowedLockDays": [
+      0,
+      30,
+      90
+    ],
+    "pricingPolicy": {
+      "minNotionalUsd": "10",
+      "maxNotionalUsd": "10000",
+      "maxMarketAgeMs": 5000,
+      "maxSpreadBps": 100,
+      "maxVenueDivergenceBps": 500,
+      "maxVenuePriceImpactBps": 300,
+      "minDexLiquidityUsd": "10000",
+      "reserveBps": 100,
+      "hedgeMarginBps": 10,
+      "maxInventoryPremiumBps": 0,
+      "requireExternalLiquidity": true
+    },
+    "lpToken": {
+      "symbol": "SET-BSTOCK-AI-LP",
+      "decimals": 18
+    },
+    "pairs": [
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "SPCXB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      },
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "SNDKB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      },
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "PLTRB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      },
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "QCOMB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      },
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "DRAMB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      },
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "GOOGLB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      },
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "MUB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      },
+      {
+        "assets": [
+          "USDT-BSC-TESTNET",
+          "NVDAB-BSC-TESTNET"
+        ],
+        "feeBps": 10,
+        "minNotionalUsd": "10",
+        "maxNotionalUsd": "10000",
+        "enabled": true
+      }
+    ],
+    "assets": [
+      {
+        "id": "USDT-BSC-TESTNET",
+        "symbol": "USDT",
+        "name": "Mock Tether USD",
+        "address": "0x0827541D8d43Bb891865440B50e6713D4C55be5A",
+        "decimals": 18,
+        "weight": 40,
+        "tokenStandard": "BEP-20",
+        "multiplier": {
+          "type": "fixed",
+          "value": "1"
+        },
+        "price": {
+          "type": "fixed",
+          "usd": "1",
+          "quoteCurrency": "USD"
+        }
+      },
+      {
+        "id": "SPCXB-BSC-TESTNET",
+        "symbol": "SPCXB",
+        "name": "Mock SpaceX bStock",
+        "address": "0x75D74Ab8EcFF5215bbad450103ceDF532C23Ae46",
+        "decimals": 18,
+        "weight": 18,
+        "underlying": {
+          "symbol": "SPCX"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "SPCXBUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      },
+      {
+        "id": "SNDKB-BSC-TESTNET",
+        "symbol": "SNDKB",
+        "name": "Mock SanDisk bStock",
+        "address": "0xb106721f4f4D515c3528278DA64017cb6fc120F1",
+        "decimals": 18,
+        "weight": 7,
+        "underlying": {
+          "symbol": "SNDK"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "SNDKBUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      },
+      {
+        "id": "PLTRB-BSC-TESTNET",
+        "symbol": "PLTRB",
+        "name": "Mock Palantir bStock",
+        "address": "0x610B80d790D8895128b49d49026EC8FA9189559d",
+        "decimals": 18,
+        "weight": 7,
+        "underlying": {
+          "symbol": "PLTR"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "PLTRBUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      },
+      {
+        "id": "QCOMB-BSC-TESTNET",
+        "symbol": "QCOMB",
+        "name": "Mock Qualcomm bStock",
+        "address": "0xcA60A189a5Edb00549FFD05cF855AFEb7E42e366",
+        "decimals": 18,
+        "weight": 7,
+        "underlying": {
+          "symbol": "QCOM"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "QCOMBUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      },
+      {
+        "id": "DRAMB-BSC-TESTNET",
+        "symbol": "DRAMB",
+        "name": "Mock Roundhill Memory ETF bStock",
+        "address": "0xcFd38Ce016Bf57997A238c67Eb591b9182307471",
+        "decimals": 18,
+        "weight": 6,
+        "underlying": {
+          "symbol": "DRAM"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "DRAMBUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      },
+      {
+        "id": "GOOGLB-BSC-TESTNET",
+        "symbol": "GOOGLB",
+        "name": "Mock Alphabet bStock",
+        "address": "0x90f0d4f7F58469ba56A09a679228873E71978264",
+        "decimals": 18,
+        "weight": 6,
+        "underlying": {
+          "symbol": "GOOGL"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "GOOGLBUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      },
+      {
+        "id": "MUB-BSC-TESTNET",
+        "symbol": "MUB",
+        "name": "Mock Micron bStock",
+        "address": "0xaE9Bb4b368a9C5C6218Fae97327A5331a72596EA",
+        "decimals": 18,
+        "weight": 5,
+        "underlying": {
+          "symbol": "MU"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "MUBUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      },
+      {
+        "id": "NVDAB-BSC-TESTNET",
+        "symbol": "NVDAB",
+        "name": "Mock NVIDIA bStock",
+        "address": "0x4825Ce7b23d59A443BAD34864132971582782Fb2",
+        "decimals": 18,
+        "weight": 4,
+        "underlying": {
+          "symbol": "NVDA"
+        },
+        "issuer": "Mock BTech Holdings Limited",
+        "product": "Mock Binance bStock certificate",
+        "tokenStandard": "BEP-8056",
+        "operational": {
+          "secondaryTrading": "available",
+          "primaryConversion": "unavailable",
+          "eligibility": "not-required"
+        },
+        "multiplier": {
+          "type": "erc8056",
+          "decimals": 18
+        },
+        "price": {
+          "type": "binance",
+          "symbol": "NVDABUSDT",
+          "quoteCurrency": "USDT",
+          "quoteUsd": "1"
+        }
+      }
+    ]
+  }
+]

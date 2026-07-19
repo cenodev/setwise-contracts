@@ -132,6 +132,16 @@ to skip it. Bootstrapping requires the deployer to be the quote signer.
 Deployment addresses and bootstrap details are written to `deployments/bsc-testnet.json`. A directly consumable RFQ API
 configuration is written to `deployments/bsc-testnet.rfq-pool-config.json`.
 
+To deploy a second version of the pool that reuses the same testnet mock tokens but excludes WBNB from its supported
+assets and bootstrap portfolio, run:
+
+```sh
+bun run deploy:no-bnb-pool:bsc-testnet
+```
+
+The no-BNB pool assigns the removed 5% WBNB weight to USDT and writes separate `deployments/bsc-testnet.no-bnb.json` and
+`deployments/bsc-testnet.no-bnb.rfq-pool-config.json` outputs, leaving the original testnet deployment unchanged.
+
 Mock bStocks keep ordinary raw ERC-20 balances for transfers and pool accounting. `uiMultiplier`, `scaledBalanceOf`, and
 `scaledTotalSupply` model bStocks corporate-action display adjustments without rebasing those raw balances.
 
