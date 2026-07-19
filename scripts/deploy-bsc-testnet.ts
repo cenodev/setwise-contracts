@@ -2,6 +2,8 @@ import { ethers, network, upgrades } from "hardhat";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 
+import { deployAndFundFaucet, faucetClaimAmounts, parsePositiveInteger, writeDeploymentOutputs } from "./faucet-config";
+
 const wrappedNativeWeight = 5;
 const usdtWeight = 35;
 
@@ -73,6 +75,8 @@ async function main(): Promise<void> {
   const bootstrapPool = process.env.BOOTSTRAP_POOL !== "false";
   const bootstrapNotionalUsd = Number(process.env.MOCK_POOL_NOTIONAL_USD ?? "100");
   const initialPoolShares = ethers.parseUnits(process.env.MOCK_POOL_SHARES ?? "1000", 18);
+  const faucetOwner = process.env.SETWISE_FAUCET_OWNER ?? deployerAddress;
+  const faucetFundingClaims = parsePositiveInteger(process.env.FAUCET_FUNDING_CLAIMS, 500n, "FAUCET_FUNDING_CLAIMS");
 
   if (!Number.isFinite(bootstrapNotionalUsd) || bootstrapNotionalUsd <= 0) {
     throw new Error("MOCK_POOL_NOTIONAL_USD must be a positive number");
@@ -201,10 +205,26 @@ async function main(): Promise<void> {
     await (await pool.transferOwnership(poolOwner)).wait();
   }
 
+  const faucet = await deployAndFundFaucet(
+    deployer,
+    [
+      { address: usdtAddress, decimals: 18, name: "Mock Tether USD", symbol: "mUSDT" },
+      ...stocks.map((stock) => ({
+        address: stock.address,
+        decimals: 18,
+        name: stock.name,
+        symbol: stock.symbol as keyof typeof faucetClaimAmounts,
+      })),
+    ],
+    faucetOwner,
+    faucetFundingClaims,
+  );
+
   const deployment = {
     chainId: Number(chainId),
     deployedAt: new Date().toISOString(),
     deployer: deployerAddress,
+    faucet,
     mockBStocks: stocks,
     mockUSDT: usdtAddress,
     mockWrappedNative: wrappedAddress,
@@ -302,7 +322,7 @@ async function main(): Promise<void> {
   const outputPath = path.join(outputDirectory, `${network.name}.json`);
   const rfqConfigPath = path.join(outputDirectory, `${network.name}.rfq-pool-config.json`);
   await mkdir(outputDirectory, { recursive: true });
-  await writeFile(outputPath, `${JSON.stringify(deployment, null, 2)}\n`, "utf8");
+  await writeDeploymentOutputs(deployment, outputPath);
   await writeFile(rfqConfigPath, `${JSON.stringify(rfqPoolConfig, null, 2)}\n`, "utf8");
 
   console.log(JSON.stringify(deployment, null, 2));

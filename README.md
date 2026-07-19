@@ -15,6 +15,7 @@ while each trade moves the pool toward its target portfolio allocation.
 - `MockBStock`: a testnet BEP-20 mock with a BEP-677/EIP-8056-compatible scaled-UI multiplier.
 - `MockUSDT`: an owner-mintable, 18-decimal testnet token matching BSC USDT units.
 - `MockWrappedBNB`: a testnet wrapped-native token for native swap testing.
+- `SetwiseMockTokenFaucet`: a pre-funded, 24-hour rate-limited basket faucet for BSC Testnet mock assets.
 
 The portfolio share token is named `Setwise Portfolio Share` with symbol `SETWISE`.
 
@@ -72,6 +73,10 @@ bun run lint
 Pools are deployed as UUPS proxies. The proxy address is the permanent integration address; implementation addresses
 change during upgrades. Only the pool owner can authorize an upgrade. Use a Safe or timelock as the owner for any
 production deployment.
+
+The BSC Testnet deployment also creates and funds the non-upgradeable mock-token faucet. To add a faucet to an existing
+deployment, top it up, pause it, change claim amounts, or recover inventory, follow
+[`docs/FAUCET_RUNBOOK.md`](./docs/FAUCET_RUNBOOK.md).
 
 ### Existing assets
 

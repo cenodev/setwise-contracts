@@ -1,0 +1,70 @@
+{
+  "chainId": 97,
+  "faucet": {
+    "address": "0x357B4Ba272421de4A0067EF2A830103Afa038F3C",
+    "cooldownSeconds": "86400"
+  },
+  "tokens": [
+    {
+      "address": "0x0827541D8d43Bb891865440B50e6713D4C55be5A",
+      "decimals": 18,
+      "name": "Mock Tether USD",
+      "symbol": "mUSDT"
+    },
+    {
+      "address": "0x75D74Ab8EcFF5215bbad450103ceDF532C23Ae46",
+      "decimals": 18,
+      "name": "Mock SpaceX bStock",
+      "symbol": "mbSPCX"
+    },
+    {
+      "address": "0xb106721f4f4D515c3528278DA64017cb6fc120F1",
+      "decimals": 18,
+      "name": "Mock SanDisk bStock",
+      "symbol": "mbSNDK"
+    },
+    {
+      "address": "0x610B80d790D8895128b49d49026EC8FA9189559d",
+      "decimals": 18,
+      "name": "Mock Palantir bStock",
+      "symbol": "mbPLTR"
+    },
+    {
+      "address": "0xcA60A189a5Edb00549FFD05cF855AFEb7E42e366",
+      "decimals": 18,
+      "name": "Mock Qualcomm bStock",
+      "symbol": "mbQCOM"
+    },
+    {
+      "address": "0xcFd38Ce016Bf57997A238c67Eb591b9182307471",
+      "decimals": 18,
+      "name": "Mock Roundhill Memory ETF bStock",
+      "symbol": "mbDRAM"
+    },
+    {
+      "address": "0x90f0d4f7F58469ba56A09a679228873E71978264",
+      "decimals": 18,
+      "name": "Mock Alphabet bStock",
+      "symbol": "mbGOOGL"
+    },
+    {
+      "address": "0xaE9Bb4b368a9C5C6218Fae97327A5331a72596EA",
+      "decimals": 18,
+      "name": "Mock Micron bStock",
+      "symbol": "mbMU"
+    },
+    {
+      "address": "0x4825Ce7b23d59A443BAD34864132971582782Fb2",
+      "decimals": 18,
+      "name": "Mock NVIDIA bStock",
+      "symbol": "mbNVDA"
+    }
+  ],
+  "wrappedNative": {
+    "address": "0x119FF2a8b74dfCE4c378CE4bd2c10201bf47e395",
+    "decimals": 18,
+    "name": "Mock Wrapped BNB",
+    "symbol": "mWBNB"
+  },
+  "testBnbFaucetUrl": "https://docs.bnbchain.org/bnb-smart-chain/developers/faucet/"
+}

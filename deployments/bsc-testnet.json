@@ -1,0 +1,194 @@
+{
+  "chainId": 97,
+  "deployedAt": "2026-07-10T12:12:29.259Z",
+  "deployer": "0x0B37DDA72EbC2E9Cd177D1455139e7355d3a9e50",
+  "mockBStocks": [
+    {
+      "marketSymbol": "SPCXBUSDT",
+      "name": "Mock SpaceX bStock",
+      "symbol": "mbSPCX",
+      "underlying": "SPCX",
+      "weight": 18,
+      "address": "0x75D74Ab8EcFF5215bbad450103ceDF532C23Ae46"
+    },
+    {
+      "marketSymbol": "SNDKBUSDT",
+      "name": "Mock SanDisk bStock",
+      "symbol": "mbSNDK",
+      "underlying": "SNDK",
+      "weight": 7,
+      "address": "0xb106721f4f4D515c3528278DA64017cb6fc120F1"
+    },
+    {
+      "marketSymbol": "PLTRBUSDT",
+      "name": "Mock Palantir bStock",
+      "symbol": "mbPLTR",
+      "underlying": "PLTR",
+      "weight": 7,
+      "address": "0x610B80d790D8895128b49d49026EC8FA9189559d"
+    },
+    {
+      "marketSymbol": "QCOMBUSDT",
+      "name": "Mock Qualcomm bStock",
+      "symbol": "mbQCOM",
+      "underlying": "QCOM",
+      "weight": 7,
+      "address": "0xcA60A189a5Edb00549FFD05cF855AFEb7E42e366"
+    },
+    {
+      "marketSymbol": "DRAMBUSDT",
+      "name": "Mock Roundhill Memory ETF bStock",
+      "symbol": "mbDRAM",
+      "underlying": "DRAM",
+      "weight": 6,
+      "address": "0xcFd38Ce016Bf57997A238c67Eb591b9182307471"
+    },
+    {
+      "marketSymbol": "GOOGLBUSDT",
+      "name": "Mock Alphabet bStock",
+      "symbol": "mbGOOGL",
+      "underlying": "GOOGL",
+      "weight": 6,
+      "address": "0x90f0d4f7F58469ba56A09a679228873E71978264"
+    },
+    {
+      "marketSymbol": "MUBUSDT",
+      "name": "Mock Micron bStock",
+      "symbol": "mbMU",
+      "underlying": "MU",
+      "weight": 5,
+      "address": "0xaE9Bb4b368a9C5C6218Fae97327A5331a72596EA"
+    },
+    {
+      "marketSymbol": "NVDABUSDT",
+      "name": "Mock NVIDIA bStock",
+      "symbol": "mbNVDA",
+      "underlying": "NVDA",
+      "weight": 4,
+      "address": "0x4825Ce7b23d59A443BAD34864132971582782Fb2"
+    }
+  ],
+  "mockUSDT": "0x0827541D8d43Bb891865440B50e6713D4C55be5A",
+  "mockWrappedNative": "0x119FF2a8b74dfCE4c378CE4bd2c10201bf47e395",
+  "network": "bsc-testnet",
+  "poolImplementation": "0xCC1A88C7C0f01f54dE8d47DAA05e4FF9CE3F6330",
+  "poolOwner": "0x0B37DDA72EbC2E9Cd177D1455139e7355d3a9e50",
+  "poolProxy": "0x62809EC4C6295177eD322090edf0f13F89442dAE",
+  "quoteSigner": "0x0B37DDA72EbC2E9Cd177D1455139e7355d3a9e50",
+  "seeded": true,
+  "seedDetails": {
+    "targetNotionalUsd": "100",
+    "pricesUsd": {
+      "USDT": "1",
+      "WBNB": "575.765",
+      "SPCXB": "150.815",
+      "SNDKB": "1813.445",
+      "PLTRB": "130.205",
+      "QCOMB": "188.835",
+      "DRAMB": "62.51",
+      "GOOGLB": "357.98",
+      "MUB": "976.51",
+      "NVDAB": "201.345"
+    },
+    "depositAmounts": {
+      "WBNB": "0.008684098547150314",
+      "USDT": "35.0",
+      "SPCXB": "0.119351523389583269",
+      "SNDKB": "0.003860056411967278",
+      "PLTRB": "0.053761376291233065",
+      "QCOMB": "0.037069399210951363",
+      "DRAMB": "0.095984642457206851",
+      "GOOGLB": "0.01676071288898821",
+      "MUB": "0.0051202752659983",
+      "NVDAB": "0.019866398470287316"
+    }
+  },
+  "faucet": {
+    "address": "0x357B4Ba272421de4A0067EF2A830103Afa038F3C",
+    "cooldownSeconds": "86400",
+    "owner": "0x0B37DDA72EbC2E9Cd177D1455139e7355d3a9e50",
+    "tokens": [
+      {
+        "address": "0x0827541D8d43Bb891865440B50e6713D4C55be5A",
+        "decimals": 18,
+        "name": "Mock Tether USD",
+        "symbol": "mUSDT",
+        "claimAmountAtomic": "1000000000000000000000",
+        "fundedAmountAtomic": "500000000000000000000000",
+        "fundingTransaction": "0x0940dbedf70adad42676e3564f0bdb3c29e98358ca3b36397aceb5054fdd0e5e"
+      },
+      {
+        "address": "0x75D74Ab8EcFF5215bbad450103ceDF532C23Ae46",
+        "decimals": 18,
+        "name": "Mock SpaceX bStock",
+        "symbol": "mbSPCX",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0xe141ab0b6ead2e21ae73da50732ac324bab2381265facf823f8db62baa5cc630"
+      },
+      {
+        "address": "0xb106721f4f4D515c3528278DA64017cb6fc120F1",
+        "decimals": 18,
+        "name": "Mock SanDisk bStock",
+        "symbol": "mbSNDK",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0x89d77edd88a0258dd9e60b60fa4d83a6218ed9cbf5bd2cf6d29b14f1d3a9e462"
+      },
+      {
+        "address": "0x610B80d790D8895128b49d49026EC8FA9189559d",
+        "decimals": 18,
+        "name": "Mock Palantir bStock",
+        "symbol": "mbPLTR",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0x1941963b90e4bc01fb1cda3bd2596c75b3887ac56d41aee349288878db3bd90a"
+      },
+      {
+        "address": "0xcA60A189a5Edb00549FFD05cF855AFEb7E42e366",
+        "decimals": 18,
+        "name": "Mock Qualcomm bStock",
+        "symbol": "mbQCOM",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0x5df8c130430ed8adfebbd631b4daa54a034b723942acc4affa62512e6b3d4493"
+      },
+      {
+        "address": "0xcFd38Ce016Bf57997A238c67Eb591b9182307471",
+        "decimals": 18,
+        "name": "Mock Roundhill Memory ETF bStock",
+        "symbol": "mbDRAM",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0x4efdda94b302f16f178b8607ca9e829c955919850d28ae36604b0ffa3618a157"
+      },
+      {
+        "address": "0x90f0d4f7F58469ba56A09a679228873E71978264",
+        "decimals": 18,
+        "name": "Mock Alphabet bStock",
+        "symbol": "mbGOOGL",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0x1d98ce925cea685afbcfa7426e15ec929b067a7702421a3e4a83337f111f9593"
+      },
+      {
+        "address": "0xaE9Bb4b368a9C5C6218Fae97327A5331a72596EA",
+        "decimals": 18,
+        "name": "Mock Micron bStock",
+        "symbol": "mbMU",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0x8ef47c134db6f7f0be01faa4de28813070f60101bbb6434d7d8d1ed9f252a28e"
+      },
+      {
+        "address": "0x4825Ce7b23d59A443BAD34864132971582782Fb2",
+        "decimals": 18,
+        "name": "Mock NVIDIA bStock",
+        "symbol": "mbNVDA",
+        "claimAmountAtomic": "10000000000000000000",
+        "fundedAmountAtomic": "5000000000000000000000",
+        "fundingTransaction": "0x53597b46f8c9f9d17fc10925e316d8b30edaba9c3a1f3d47952041f57c55a3cf"
+      }
+    ]
+  }
+}
