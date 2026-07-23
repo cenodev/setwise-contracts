@@ -80,6 +80,7 @@
     "prettier:check": "prettier --check \"**/*.{js,json,md,sol,ts,yml}\"",
     "prettier:write": "prettier --write \"**/*.{js,json,md,sol,ts,yml}\"",
     "test": "hardhat test",
+    "typecheck": "tsc --noEmit -p tsconfig.docs.json",
     "top-up:faucet:bsc-testnet": "hardhat run scripts/top-up-faucet-bsc-testnet.ts --network bsc-testnet",
     "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
     "upgrade:bsc-testnet": "hardhat run scripts/upgrade.ts --network bsc-testnet",
