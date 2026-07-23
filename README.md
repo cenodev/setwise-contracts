@@ -6,6 +6,12 @@ while each trade moves the pool toward its target portfolio allocation.
 
 > The contracts have not been audited for production use.
 
+## Pool documentation
+
+Integrators (Setwise Router, RFQ API, operators, auditors) should start with [`docs/README.md`](./docs/README.md). It
+covers swap interfaces, EIP-712 domains, deployments, security controls, and router/RFQ integration invariants.
+User-facing copy uses **Set**; manifests and contract fields keep `pool` / `poolId`.
+
 ## Contracts
 
 - `SetwisePoolBase`: portfolio shares, supported assets, deposits, withdrawals, swaps, and quote verification.

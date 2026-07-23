@@ -1,0 +1,168 @@
+{
+  "schema": "setwise-contracts/pool-interface@1",
+  "source": {
+    "contracts": ["contracts/SetwisePoolBase.sol", "contracts/SetwisePool.sol", "contracts/SetwiseRebalancingPool.sol"],
+    "artifact": "artifacts/contracts/SetwiseRebalancingPool.sol/SetwiseRebalancingPool.json"
+  },
+  "eip712": {
+    "domain": {
+      "name": "SetwisePool",
+      "version": "2.0.0"
+    },
+    "types": {
+      "SwapQuote": {
+        "type": "SwapQuote(address payer,address inputAsset,address outputAsset,uint256 inputAmount,uint256 outputAmount,bytes32 quoteId,uint256 deadline,address recipient)",
+        "typehash": "0x05f457dcd915199b3c456f83a601d28b8a9c57b952c20f6b13c56eec1b203c13"
+      },
+      "PortfolioDeposit": {
+        "type": "PortfolioDeposit(address investor,uint256[] depositAmounts,uint256 lockDays,uint256 shares,bytes32 quoteId,uint256 deadline)",
+        "typehash": "0x90eff7950a18e9b42082d19a739e5d8f1e23ddf3844f966c174f0d942aa9a919"
+      },
+      "SingleAssetDeposit": {
+        "type": "SingleAssetDeposit(address investor,address asset,uint256 amount,uint256 lockDays,uint256 shares,bytes32 quoteId,uint256 deadline)",
+        "typehash": "0x095d9af042f81616b461d77a774c588365a147dee1311ce4a5bb47309041ca66"
+      },
+      "SingleAssetWithdrawal": {
+        "type": "SingleAssetWithdrawal(address investor,uint256 sharesToBurn,address asset,uint256 assetAmount,bytes32 quoteId,uint256 deadline)",
+        "typehash": "0xd130e39ea81bebd4391a6f69404b552b458c51e16eac11cf292fe2f8ebd03c4b"
+      }
+    }
+  },
+  "functions": {
+    "swapExactAssetForAsset": {
+      "signature": "swapExactAssetForAsset(address,address,uint256,uint256,bytes32,uint256,address,bytes,bytes)",
+      "selector": "0x24266baa",
+      "stateMutability": "nonpayable",
+      "assetMode": "erc20-to-erc20"
+    },
+    "swapExactNativeForAsset": {
+      "signature": "swapExactNativeForAsset(address,uint256,uint256,bytes32,uint256,address,bytes,bytes)",
+      "selector": "0xdcf8b279",
+      "stateMutability": "payable",
+      "assetMode": "native-to-erc20"
+    },
+    "swapExactAssetForNative": {
+      "signature": "swapExactAssetForNative(address,uint256,uint256,bytes32,uint256,address,bytes,bytes)",
+      "selector": "0x695d9b7f",
+      "stateMutability": "nonpayable",
+      "assetMode": "erc20-to-native"
+    },
+    "depositPortfolio": {
+      "signature": "depositPortfolio(uint256[],uint256,uint256,bytes32,uint256,bytes)",
+      "selector": "0xcdee6b48",
+      "stateMutability": "nonpayable"
+    },
+    "depositSingleAsset": {
+      "signature": "depositSingleAsset(address,uint256,uint256,uint256,bytes32,uint256,bytes)",
+      "selector": "0x0e82dc83",
+      "stateMutability": "nonpayable"
+    },
+    "withdrawSingleAsset": {
+      "signature": "withdrawSingleAsset(address,uint256,address,uint256,bytes32,uint256,bytes)",
+      "selector": "0xfa059f3d",
+      "stateMutability": "nonpayable"
+    },
+    "withdrawPortfolio": {
+      "signature": "withdrawPortfolio(uint256)",
+      "selector": "0x50589f51",
+      "stateMutability": "nonpayable"
+    },
+    "QUOTE_SIGNER": {
+      "signature": "QUOTE_SIGNER()",
+      "selector": "0xd0e15ba4",
+      "stateMutability": "view"
+    },
+    "WRAPPED_NATIVE_TOKEN": {
+      "signature": "WRAPPED_NATIVE_TOKEN()",
+      "selector": "0x1b3f8c5e",
+      "stateMutability": "view"
+    },
+    "usedQuoteIds": {
+      "signature": "usedQuoteIds(bytes32)",
+      "selector": "0x03ea8003",
+      "stateMutability": "view"
+    },
+    "isSupportedAsset": {
+      "signature": "isSupportedAsset(address)",
+      "selector": "0x9be918e6",
+      "stateMutability": "view"
+    },
+    "quoteDomainSeparator": {
+      "signature": "quoteDomainSeparator()",
+      "selector": "0x7102ae2a",
+      "stateMutability": "view"
+    },
+    "recordedBalance": {
+      "signature": "recordedBalance(address)",
+      "selector": "0x5089331d",
+      "stateMutability": "view"
+    },
+    "portfolioState": {
+      "signature": "portfolioState()",
+      "selector": "0xebb5bd60",
+      "stateMutability": "view"
+    },
+    "assetCount": {
+      "signature": "assetCount()",
+      "selector": "0xeafe7a74",
+      "stateMutability": "view"
+    },
+    "assetAt": {
+      "signature": "assetAt(uint256)",
+      "selector": "0xaa9239f5",
+      "stateMutability": "view"
+    },
+    "isTradingPaused": {
+      "signature": "isTradingPaused()",
+      "selector": "0x3f2306ab",
+      "stateMutability": "view"
+    },
+    "pauseTrading": {
+      "signature": "pauseTrading()",
+      "selector": "0x1031e36e",
+      "stateMutability": "nonpayable"
+    },
+    "resumeTrading": {
+      "signature": "resumeTrading()",
+      "selector": "0x0694db1e",
+      "stateMutability": "nonpayable"
+    },
+    "guardian": {
+      "signature": "guardian()",
+      "selector": "0x452a9320",
+      "stateMutability": "view"
+    }
+  },
+  "events": {
+    "SwapExecuted": {
+      "signature": "SwapExecuted(address,address,address,uint256,uint256,bytes)",
+      "topicHash": "0xa2fe6ab887b4a569b99c1b733c36e55e75e395f7aee85044820ab8155716c9e6"
+    }
+  },
+  "errors": {
+    "QuoteAlreadyUsed": {
+      "signature": "QuoteAlreadyUsed(bytes32)",
+      "selector": "0xe6b79916"
+    },
+    "InvalidQuoteId": {
+      "signature": "InvalidQuoteId()",
+      "selector": "0x140dcdb5"
+    },
+    "InvalidNativeAmount": {
+      "signature": "InvalidNativeAmount(uint256,uint256)",
+      "selector": "0xcfdff0eb"
+    },
+    "InvalidSignature": {
+      "signature": "InvalidSignature()",
+      "selector": "0x8baa579f"
+    },
+    "TradingPaused": {
+      "signature": "TradingPaused()",
+      "selector": "0x02b874a6"
+    },
+    "RebalancingInvariantViolation": {
+      "signature": "RebalancingInvariantViolation()",
+      "selector": "0xe2f49bf6"
+    }
+  }
+}
